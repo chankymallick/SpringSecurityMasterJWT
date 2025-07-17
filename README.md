@@ -20,11 +20,46 @@ This project is a Spring MVC (non-Boot) web application demonstrating advanced s
 - **Form Login & OAuth2 Login:**  
   Web users authenticate via a custom login page or Google OAuth2.
 - **REST API Security:**  
-  All `/api/**` endpoints require HTTP Basic authentication, while web endpoints do not.
+  All `/api/**` endpoints require JWT authentication (previously HTTP Basic), while web endpoints do not.
+- **JWT Authentication for APIs:**  
+  API clients obtain a JWT token via `/jwttlogin` endpoint and use it in the `Authorization: Bearer <token>` header for all `/api/**` requests.
 - **Custom Security Chains:**  
   Two `SecurityFilterChain` beans are defined to separate API and web security concerns.
 - **Configurable OAuth2:**  
   OAuth2 client details can be loaded from `application.properties`.
+
+---
+
+## JWT Authentication
+
+- **Login Endpoint:**  
+  `POST /jwttlogin` with JSON body `{ "username": "...", "password": "..." }` returns a JWT token if credentials are valid.
+- **API Access:**  
+  All `/api/**` endpoints require the JWT token in the `Authorization: Bearer <token>` header.
+- **Stateless Security:**  
+  No session cookies are created for API endpoints; authentication is fully stateless.
+- **JWT Filter:**  
+  A custom filter validates JWT tokens for API requests.
+
+---
+
+## JWT Token Properties & Security Features
+
+- **Claims:**  
+  - `sub`: Username
+  - `iat`: Issued at timestamp
+  - `exp`: Expiration timestamp
+  - Custom claims (e.g., roles) may be included
+- **Signature:**  
+  - Signed using a secure secret key (see `JwtUtil.java`)
+- **Expiration:**  
+  - Tokens have a configurable expiration (default: 1 hour)
+- **Validation:**  
+  - Tokens are validated for signature, expiration, and subject
+- **Security:**  
+  - API endpoints are protected from CSRF and session fixation attacks
+  - Only valid JWT tokens grant access to `/api/**`
+  - No session cookies are set for API endpoints
 
 ---
 

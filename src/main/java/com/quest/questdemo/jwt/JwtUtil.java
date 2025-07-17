@@ -59,9 +59,13 @@ public class JwtUtil {
     }
     
     /**
-     * Extracts username from JWT token
-     * @param token - JWT token string
-     * @return username as String
+     * Gets the username from a JWT token
+     * 
+     * Think of this like opening a sealed envelope and reading who it's addressed to.
+     * The JWT token contains the username, and this method extracts it.
+     * 
+     * @param token - The JWT token (the sealed envelope)
+     * @return The username stored inside the token
      */
     public String getUsernameFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
@@ -69,9 +73,14 @@ public class JwtUtil {
     }
     
     /**
-     * Extracts user authorities/roles from JWT token
-     * @param token - JWT token string
-     * @return List of authority strings
+     * Gets the user's permissions/roles from the JWT token
+     * 
+     * This is like checking what access badges someone has. A user might have
+     * roles like "ADMIN", "USER", or "MANAGER". This method pulls out all those
+     * roles from the token so we know what the user is allowed to do.
+     * 
+     * @param token - The JWT token containing user information
+     * @return A list of roles/permissions (like ["ROLE_USER", "ROLE_ADMIN"])
      */
     @SuppressWarnings("unchecked")
     public List<String> getAuthoritiesFromToken(String token) {
@@ -80,9 +89,14 @@ public class JwtUtil {
     }
     
     /**
-     * Gets authentication type from JWT token
-     * @param token - JWT token string
-     * @return authentication type (LDAP, DATABASE, etc.)
+     * Finds out how the user logged in (LDAP, Database, etc.)
+     * 
+     * This tells us which system verified the user's password. It's like knowing
+     * whether someone entered the building using their employee card (LDAP) or
+     * signed in at the front desk (Database).
+     * 
+     * @param token - The JWT token
+     * @return The authentication method used (like "LDAP" or "DATABASE")
      */
     public String getAuthTypeFromToken(String token) {
         Claims claims = getClaimsFromToken(token);

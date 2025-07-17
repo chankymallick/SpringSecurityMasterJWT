@@ -4,6 +4,7 @@ import com.quest.questdemo.config.authenticationPrePosthandler.CustomOAuth2Authe
 import com.quest.questdemo.config.authenticationPrePosthandler.CustomOAuth2VerificationFilter;
 import com.quest.questdemo.config.authproviders.CustomDBAuthenticationProvider;
 import com.quest.questdemo.config.authproviders.CustomLDAPAuthenticationProvider;
+import com.quest.questdemo.jwt.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +22,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.InMemoryOAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.core.annotation.Order;
 
 @Configuration
@@ -39,6 +41,11 @@ public class SecurityConfig {
     @Autowired
     private CustomOAuth2AuthenticationSuccessHandler customOAuth2AuthenticationSuccessHandler;
 
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    // Original API Security Filter Chain with HTTP Basic Authentication (commented out)
+    /*
     @Bean
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -53,6 +60,25 @@ public class SecurityConfig {
 
         return http.build();
     }
+    */
+
+    // New API Security Filter Chain with JWT Authentication
+    @Bean
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/**") // Only apply this filter chain to /api/** paths
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .requestMatchers("/api/**").authenticated() // Require authentication for API endpoints
+                )
+                .csrf(csrf -> csrf.disable()) // Disable CSRF for API endpoints (stateless)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS)
+                ) // Stateless session for JWT
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // Add JWT filter
+
+        return http.build();
+    }
 
     @Bean
     @Order(2)
@@ -60,7 +86,7 @@ public class SecurityConfig {
         http
                 .addFilterBefore(customOAuth2VerificationFilter, org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                .requestMatchers("/LoginPage", "/WEB-INF/views/**", "/api/**", "/jwttlogin/**").permitAll() // Allow all JWT endpoints including validation
+                .requestMatchers("/LoginPage", "/WEB-INF/views/**", "/jwttlogin/**").permitAll() // Removed /api/** - it's handled by API security chain
                 .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> oauth2Login
@@ -83,7 +109,7 @@ public class SecurityConfig {
                 .clearAuthentication(true)
                 .permitAll())
                 .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/jwttlogin/**")); // Disable CSRF for JWT endpoints
+                .ignoringRequestMatchers("/jwttlogin/**")); // Only disable CSRF for JWT login endpoints
 
 
         return http.build();
